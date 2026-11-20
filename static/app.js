@@ -1593,7 +1593,7 @@ async function loadDashboard() {
     const map = {
       metricJobsToday: m.jobs_added_today,
       metricTotalJobs: m.total_jobs,
-      metricEnabledSources: m.total_sources ?? 18,
+      metricEnabledSources: m.total_sources ?? 0,
       metricFailedToday: m.failed_runs_today,
     };
     Object.entries(map).forEach(([id, value]) => {

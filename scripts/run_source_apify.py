@@ -52,10 +52,53 @@ def first(item, keys):
 def map_item(item):
     if not isinstance(item, dict):
         raise ValueError("Actor dataset item must be a JSON object")
+
+    # Google Jobs Actors may emit search-summary rows alongside actual job rows.
+    if item.get("type") == "search":
+        return None
+
+    is_google_record = (
+        item.get("type") == "job"
+        or any(key in item for key in ("jobId", "applyUrl", "applyOptions"))
+    )
+    if is_google_record:
+        url = first(item, ("applyUrl", "jobUrl", "url"))
+        if isinstance(url, dict):
+            url = first(url, ("url", "href", "link"))
+        location = flatten_text(first(item, ("location", "jobLocation", "formattedLocation")))
+        search_location = flatten_text(item.get("searchLocation"))
+        country = flatten_text(first(item, ("country", "countryName")))
+        if not country and search_location.lower() not in {"worldwide", "anywhere", "all locations", ""}:
+            country = search_location
+        return {
+            "external_id": first(item, ("jobId", "job_id", "id")),
+            "title": first(item, ("title", "jobTitle", "job_title")),
+            "company": flatten_text(first(item, ("company", "companyName", "employer"))),
+            "location": location,
+            "country": country or None,
+            "experience": flatten_text(first(item, ("experience", "experienceRange", "experienceText", "seniority"))),
+            "salary_min": first(item, ("salaryMin", "salaryYearlyMin", "minSalary")),
+            "salary_max": first(item, ("salaryMax", "salaryYearlyMax", "maxSalary")),
+            "salary_currency": first(item, ("salaryCurrency", "currency")),
+            "salary_period": first(item, ("salaryPeriod", "payPeriod")),
+            "salary": first(item, ("salary",)),
+            "skills": first(item, ("skills", "qualifications", "technologies")),
+            "description": first(item, ("description", "descriptionText", "jobDescription")),
+            "job_url": str(url).strip() if url else None,
+            "posted_at": first(item, ("postedAt", "posted_at", "datePosted")),
+            "status": "active",
+            "work_mode": "Remote" if item.get("isRemote") is True else flatten_text(first(item, ("workMode", "workplaceType", "workplace_type"))) or None,
+            "employment_type": flatten_text(first(item, ("employmentType", "employment_type"))) or None,
+            "company_logo": first(item, ("companyLogoUrl", "company_logo", "logoUrl")),
+            "posted_via": flatten_text(first(item, ("via", "source", "jobBoard"))) or None,
+            "apply_options": item.get("applyOptions") if isinstance(item.get("applyOptions"), list) else [],
+            "raw_metadata": {k: v for k, v in item.items() if k != "description"},
+        }
+
     url = first(item, (
         "job_url", "jobUrl", "job_link", "jobLink", "url", "link",
         "apply_url", "applyUrl", "platform_url", "jobDetailsUrl", "job_url_link", "public_url",
-        "jobLinkUrl", "job_url_path", "jobPageUrl", "jobPostingUrl", "href","canonicalUrl",
+        "jobLinkUrl", "job_url_path", "jobPageUrl", "jobPostingUrl", "href", "canonicalUrl",
     ))
     if isinstance(url, dict):
         url = first(url, ("url", "href", "link"))
@@ -75,6 +118,13 @@ def map_item(item):
         "job_url": str(url).strip() if url else None,
         "posted_at": first(item, ("posted_at", "postedAt", "posted_date", "postedDate", "datePublished", "postDate", "published_at", "created_at")),
         "status": first(item, ("status", "job_status")) or "active",
+        "country": flatten_text(first(item, ("country", "countryName"))) or None,
+        "work_mode": flatten_text(first(item, ("work_mode", "workMode", "workplaceType"))) or None,
+        "employment_type": flatten_text(first(item, ("employment_type", "employmentType", "jobType"))) or None,
+        "company_logo": first(item, ("companyLogoUrl", "company_logo", "logoUrl")),
+        "posted_via": flatten_text(first(item, ("via", "source", "jobBoard"))) or None,
+        "apply_options": item.get("applyOptions") if isinstance(item.get("applyOptions"), list) else [],
+        "raw_metadata": {k: v for k, v in item.items() if k not in {"description", "descriptionHtml"}},
     }
 
 
@@ -126,7 +176,7 @@ def run_one_source(source_name, keyword, location, max_results, token_override=N
         actor_id = os.getenv("APIFY_NAUKRI_ACTOR_ID", "").strip()
     if not actor_id:
         actor_id = DEFAULT_APIFY_ACTORS.get(env_key, "")
-    token = (token_override or os.getenv("APIFY_API_TOKEN", "")).strip()
+    token = (token_override or os.getenv(f"APIFY_API_TOKEN_{env_key}", "") or (os.getenv("APIFY_API_TOKEN_COLLECTOR1", "") if env_key == "GOOGLE_JOBS" else "") or os.getenv("APIFY_API_TOKEN", "")).strip()
     if not token:
         raise RuntimeError("Missing API token. Set APIFY_API_TOKEN_COLLECTOR_1/2/3 or APIFY_API_TOKEN in .env.")
     if not actor_id:
@@ -145,6 +195,7 @@ def run_one_source(source_name, keyword, location, max_results, token_override=N
         run_input = replace_placeholders(run_input, keyword, location, max_results)
     else:
         verified_input_defaults = {
+            "GOOGLE_JOBS": {"queries": [keyword], "country": "in", "datePosted": "week", "maxItems": min(max_results, 50)},
             "NAUKRI": {"keyword": keyword, "location": location, "maxJobs": max_results, "experienceMin": 0},
             "PLACEMENTINDIA": {"searchKeyword": keyword, "location": "All India", "maxJobs": min(max_results, 10), "experienceLevel": "All", "industry": "All", "jobType": "All"},
             "INDEED": {"query": keyword, "location": location, "maxItems": max_results},
@@ -174,16 +225,34 @@ def run_one_source(source_name, keyword, location, max_results, token_override=N
     client = ApifyClient(token)
     logger.info("Starting Actor for source=%s actor=%s requested_max=%d", portal["name"].strip(), actor_id, max_results)
     run = client.actor(actor_id).call(run_input=run_input)
-    if not run or run.get("status") != "SUCCEEDED":
-        raise RuntimeError(f"Actor run did not succeed: {run.get('status') if run else 'no run result'}")
-    dataset_id = run.get("defaultDatasetId")
+    if not run:
+        raise RuntimeError("Apify returned no run result.")
+
+    def run_field(run_object, *names):
+        if isinstance(run_object, dict):
+            for name in names:
+                if run_object.get(name) is not None:
+                    return run_object[name]
+        for name in names:
+            value = getattr(run_object, name, None)
+            if value is not None:
+                return value
+        return None
+
+    run_status = run_field(run, "status")
+    if str(run_status).upper() != "SUCCEEDED":
+        raise RuntimeError(f"Actor run did not succeed: {run_status}")
+    dataset_id = run_field(run, "defaultDatasetId", "default_dataset_id")
     if not dataset_id:
         raise RuntimeError("Actor run succeeded but did not return a dataset ID.")
 
     normalized, skipped = [], 0
     for index, item in enumerate(client.dataset(dataset_id).iterate_items()):
         try:
-            normalized.append(normalize_job(map_item(item)))
+            mapped = map_item(item)
+            if mapped is None:
+                continue
+            normalized.append(normalize_job(mapped))
         except (ValueError, TypeError, AttributeError) as exc:
             skipped += 1
             logger.warning("Skipping invalid %s item %s: %s", portal["name"].strip(), index, exc)

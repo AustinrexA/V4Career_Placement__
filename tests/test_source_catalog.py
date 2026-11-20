@@ -1,31 +1,31 @@
 import unittest
 from urllib.parse import urlparse
 
-from collectors.source_catalog import JOB_PORTALS, PORTAL_BY_KEY, UI_PORTAL_KEYS
+from collectors.source_catalog import JOB_PORTALS, PORTAL_BY_KEY, UI_PORTAL_KEYS, REMOTE_MULTI_SOURCE_KEYS
 
 
 class SourceCatalogTests(unittest.TestCase):
-    def test_catalog_contains_all_25_scoped_portals_with_unique_keys(self):
+    def test_catalog_contains_21_portals_with_unique_keys(self):
         expected = {
-            "Naukri", "LinkedIn Jobs", "Indeed", "Foundit", "Internshala",
-            "TimesJobs", "Freshersworld", "Cutshort", "Instahyre", "Hirist",
-            "Apna", "Shine.com", "Wellfound", "National Career Service (NCS)",
-            "iimjobs", "HerKey", "WorkIndia", "Hirect", "Jooble", "QuikrJobs",
-            "Jobsora", "Jora", "PlacementIndia", "LetsIntern", "Glassdoor",
+            "LinkedIn", "Glassdoor", "Naukri", "Indeed", "Foundit",
+            "Internshala", "TimesJobs", "Wellfound", "CutShort", "Hirist",
+            "Instahyre", "Freshersworld", "Unstop", "Bayt", "Shine",
+            "Google Jobs", "Jobicy", "Arbeitnow", "We Work Remotely",
+            "Remote OK", "Working Nomads",
         }
-        self.assertEqual(len(JOB_PORTALS), 25)
+        self.assertEqual(len(JOB_PORTALS), 21)
         self.assertEqual({portal["name"] for portal in JOB_PORTALS}, expected)
-        self.assertEqual(len({portal["key"] for portal in JOB_PORTALS}), 25)
-        self.assertEqual(len({portal["name"].lower() for portal in JOB_PORTALS}), 25)
+        self.assertEqual(len({portal["key"] for portal in JOB_PORTALS}), 21)
+        self.assertEqual(len({portal["name"].lower() for portal in JOB_PORTALS}), 21)
 
+    def test_all_catalogued_portals_are_in_ui_allowlist(self):
+        self.assertEqual(UI_PORTAL_KEYS, {portal["key"] for portal in JOB_PORTALS})
 
-    def test_ui_allowlist_excludes_jora_after_http_403_and_zero_saved_jobs(self):
-        self.assertEqual(UI_PORTAL_KEYS, {
-            "NAUKRI", "INDEED", "FOUNDIT", "TIMESJOBS", "INTERNSHALA", "LINKEDIN_JOBS",
-            "FRESHERSWORLD", "CUTSHORT", "HIRIST", "SHINE_COM", "WELLFOUND",
-            "NATIONAL_CAREER_SERVICE_NCS", "IIMJOBS", "JOOBLE", "QUIKRJOBS",
-            "PLACEMENTINDIA", "GLASSDOOR",
+    def test_remote_boards_use_shared_multi_board_collector(self):
+        self.assertEqual(REMOTE_MULTI_SOURCE_KEYS, {
+            "JOBICY", "ARBEITNOW", "WE_WORK_REMOTELY", "REMOTE_OK", "WORKING_NOMADS"
         })
+        self.assertTrue(REMOTE_MULTI_SOURCE_KEYS.issubset(UI_PORTAL_KEYS))
 
     def test_all_portals_have_valid_https_homepages_and_keys(self):
         for portal in JOB_PORTALS:

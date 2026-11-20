@@ -1,79 +1,66 @@
-"""Catalog of job portals shown in V4Career.
+"""Canonical catalog for the V4Career job portal integrations.
 
-Catalog presence makes a portal discoverable in the UI; it does not mean a
-collector is configured or authorized. Configure and test an Actor/API/feed
-before enabling collection. Popular portals are ordered first for sidebar UX.
+Catalog membership controls whether a source is selectable in the portal UI.
+It does not certify that a third-party Actor/API is currently available or
+approved. Keep source names/keys unique and test each collector independently.
 """
+
 JOB_PORTALS = [
-    {'name': 'LinkedIn', 'base_url': 'https://www.linkedin.com/jobs/', 'key': 'LINKEDIN_JOBS', 'popular': True, 'method': 'JobSpy'},
-    {'name': 'Glassdoor', 'base_url': 'https://www.glassdoor.co.in/Job', 'key': 'GLASSDOOR', 'popular': True, 'method': 'JobSpy'},
-    {'name': 'Naukri', 'base_url': 'https://www.naukri.com', 'key': 'NAUKRI', 'popular': True, 'method': 'JobSpy'},
-    {'name': 'Indeed', 'base_url': 'https://in.indeed.com', 'key': 'INDEED', 'popular': True, 'method': 'JobSpy'},
-    {'name': 'Foundit', 'base_url': 'https://www.foundit.in', 'key': 'FOUNDIT', 'popular': False, 'method': 'Apify'},
-    {'name': 'Internshala', 'base_url': 'https://internshala.com', 'key': 'INTERNSHALA', 'popular': False, 'method': 'Apify'},
-    {'name': 'TimesJobs', 'base_url': 'https://www.timesjobs.com', 'key': 'TIMESJOBS', 'popular': False, 'method': 'Apify'},
-    {'name': 'Wellfound', 'base_url': 'https://wellfound.com', 'key': 'WELLFOUND', 'popular': False, 'method': 'Apify'},
-    {'name': 'CutShort', 'base_url': 'https://cutshort.io/', 'key': 'CUTSHORT', 'popular': False, 'method': 'Apify'},
-    {'name': 'Hirist', 'base_url': 'https://www.hirist.tech/', 'key': 'HIRIST', 'popular': False, 'method': 'Apify'},
-    {'name': 'Instahyre', 'base_url': 'https://www.instahyre.com/', 'key': 'INSTAHYRE', 'popular': False, 'method': 'Apify'},
-    {'name': 'Freshersworld', 'base_url': 'https://www.freshersworld.com/', 'key': 'FRESHERSWORLD', 'popular': False, 'method': 'Apify'},
-    {'name': 'Unstop', 'base_url': 'https://unstop.com/', 'key': 'UNSTOP', 'popular': False, 'method': 'Apify'},
-    {'name': 'Bayt', 'base_url': 'https://www.bayt.com/', 'key': 'BAYT', 'popular': False, 'method': 'JobSpy'},
-    {'name': 'Shine', 'base_url': 'https://www.shine.com/', 'key': 'SHINE_COM', 'popular': False, 'method': 'Apify'},
+    # Existing integrations: keep the four primary portals first.
+    {"name": "Naukri", "base_url": "https://www.naukri.com/", "key": "NAUKRI", "popular": True, "method": "JobSpy"},
+    {"name": "Indeed", "base_url": "https://in.indeed.com/", "key": "INDEED", "popular": True, "method": "JobSpy"},
+    {"name": "Foundit", "base_url": "https://www.foundit.in/", "key": "FOUNDIT", "popular": True, "method": "Apify"},
+    {"name": "TimesJobs", "base_url": "https://www.timesjobs.com/", "key": "TIMESJOBS", "popular": True, "method": "Apify"},
+    {"name": "LinkedIn", "base_url": "https://www.linkedin.com/jobs/", "key": "LINKEDIN_JOBS", "popular": False, "method": "JobSpy"},
+    {"name": "Glassdoor", "base_url": "https://www.glassdoor.co.in/Job/", "key": "GLASSDOOR", "popular": False, "method": "JobSpy"},
+    {"name": "Internshala", "base_url": "https://internshala.com/", "key": "INTERNSHALA", "popular": False, "method": "Apify"},
+    {"name": "Wellfound", "base_url": "https://wellfound.com/", "key": "WELLFOUND", "popular": False, "method": "Apify"},
+    {"name": "CutShort", "base_url": "https://cutshort.io/", "key": "CUTSHORT", "popular": False, "method": "Apify"},
+    {"name": "Hirist", "base_url": "https://www.hirist.tech/", "key": "HIRIST", "popular": False, "method": "Apify"},
+    {"name": "Instahyre", "base_url": "https://www.instahyre.com/", "key": "INSTAHYRE", "popular": False, "method": "Apify"},
+    {"name": "Freshersworld", "base_url": "https://www.freshersworld.com/", "key": "FRESHERSWORLD", "popular": False, "method": "Apify"},
+    {"name": "Unstop", "base_url": "https://unstop.com/", "key": "UNSTOP", "popular": False, "method": "Apify"},
+    {"name": "Bayt", "base_url": "https://www.bayt.com/", "key": "BAYT", "popular": False, "method": "JobSpy"},
+    {"name": "Shine", "base_url": "https://www.shine.com/", "key": "SHINE_COM", "popular": False, "method": "Apify"},
+    # Added integrations from the second project.
+    {"name": "Google Jobs", "base_url": "https://www.google.com/search?udm=8", "key": "GOOGLE_JOBS", "popular": False, "method": "Apify"},
+    {"name": "Jobicy", "base_url": "https://jobicy.com/jobs", "key": "JOBICY", "popular": False, "method": "Apify"},
+    {"name": "Arbeitnow", "base_url": "https://www.arbeitnow.com/", "key": "ARBEITNOW", "popular": False, "method": "Apify"},
+    {"name": "We Work Remotely", "base_url": "https://weworkremotely.com/", "key": "WE_WORK_REMOTELY", "popular": False, "method": "Apify"},
+    {"name": "Remote OK", "base_url": "https://remoteok.com/", "key": "REMOTE_OK", "popular": False, "method": "Apify"},
+    {"name": "Working Nomads", "base_url": "https://www.workingnomads.com/jobs", "key": "WORKING_NOMADS", "popular": False, "method": "Apify"},
 ]
 
-# Display exactly the 15 selected portals in the Job Portal sidebar.
-UI_PORTAL_KEYS = {item['key'] for item in JOB_PORTALS}
+# Every catalogued portal is selectable in the portal UI.
+UI_PORTAL_KEYS = {portal["key"] for portal in JOB_PORTALS}
 
-# Default Actor IDs are candidates; each portal still requires valid credentials,
-# actor input configuration, and approval before collection can run.
+# Apify Actor IDs are candidates only. Collection must still be explicitly
+# approved via APIFY_ACCESS_APPROVED_<KEY>=true and validated against the
+# Actor's current input schema and terms.
 DEFAULT_APIFY_ACTORS = {
-    'FOUNDIT': 'deriverge~foundit-jobs-scraper',
-    'INTERNSHALA': 'automation-lab~internshala-scraper',
-    'TIMESJOBS': 'unfenced-group~timesjobs-scraper',
-    'WELLFOUND': 'cprussin~wellfound-jobs',
-    'CUTSHORT': 'silentflow~cutshort-jobs-scraper',
-    'HIRIST': 's_actors~hirist-jobs-scraper',
-    'INSTAHYRE': 'themineworks~instahyre-jobs-scraper',
-    'FRESHERSWORLD': 'shahidirfan~freshersworld-jobs-scraper',
-    'UNSTOP': 'data_daemon~unstop-scraper',
-    'SHINE_COM': 'bovi~shine-scraper',
-}
-
-
-PORTAL_BY_KEY = {item["key"].lower(): item for item in JOB_PORTALS}
-PORTAL_BY_NAME = {item["name"].strip().lower(): item for item in JOB_PORTALS}
-
-# Community Actor candidates already used by this project. These are not
-# pre-approved; collection still requires APIFY_ACCESS_APPROVED_<KEY>=true.
-DEFAULT_APIFY_ACTORS = {
-    "NAUKRI": "automation-lab~naukri-scraper",
-    "INDEED": "unfenced-group~indeed-in-scraper",
     "FOUNDIT": "deriverge~foundit-jobs-scraper",
     "INTERNSHALA": "automation-lab~internshala-scraper",
     "TIMESJOBS": "unfenced-group~timesjobs-scraper",
     "WELLFOUND": "cprussin~wellfound-jobs",
-    # Additional public Actor candidates; each remains approval-gated.
     "CUTSHORT": "silentflow~cutshort-jobs-scraper",
-    "INSTAHYRE": "themineworks~instahyre-jobs-scraper",
     "HIRIST": "s_actors~hirist-jobs-scraper",
-    "APNA": "automation-lab~apna-india-job-listings-scraper",
-    "SHINE_COM": "bovi~shine-scraper",
-    "IIMJOBS": "silentflow~iimjobs-scraper",
-    "WORKINDIA": "jobsapi~workindia-jobs-search-scraper",
-    "GLASSDOOR": "hgservices~glassdoor-jobs-scraper",
-    # Additional candidates discovered in public Apify Store listings; not live-tested.
-    "LINKEDIN_JOBS": "keklik~linkedin-jobs-scraper",
+    "INSTAHYRE": "themineworks~instahyre-jobs-scraper",
     "FRESHERSWORLD": "shahidirfan~freshersworld-jobs-scraper",
-    "NATIONAL_CAREER_SERVICE_NCS": "jobsapi~ncs-jobs-search-scraper",
-    "JOOBLE": "ahmed_jasarevic~jooble-scraper",
-    "QUIKRJOBS": "jobsapi~quikr-jobs-search-scraper",
-    "JORA": "scrapeai~jora-jobs-scraper",
-    "PLACEMENTINDIA": "fervent_bus~placementindia-scraper",
+    "UNSTOP": "data_daemon~unstop-scraper",
+    "SHINE_COM": "bovi~shine-scraper",
+    "GOOGLE_JOBS": "themineworks~google-jobs-scraper",
 }
 
+# These five remote boards are handled by scripts/run_six_portals.py through
+# one command, using each board's public API/RSS feed (no shared scraping Actor).
+REMOTE_MULTI_SOURCE_KEYS = {
+    "JOBICY", "ARBEITNOW", "WE_WORK_REMOTELY", "REMOTE_OK", "WORKING_NOMADS"
+}
 
-# Apify estimated price per 1,000 jobs (USD) and account assignment from the user's sheet.
+PORTAL_BY_KEY = {portal["key"].lower(): portal for portal in JOB_PORTALS}
+PORTAL_BY_NAME = {portal["name"].strip().lower(): portal for portal in JOB_PORTALS}
+
+# Existing estimates/account assignments retained from the project.
 APIFY_PORTAL_BILLING = {
     "CUTSHORT": {"usd_per_1000": 0.80, "account": "COLLECTOR1"},
     "WELLFOUND": {"usd_per_1000": 0.50, "account": "COLLECTOR1"},

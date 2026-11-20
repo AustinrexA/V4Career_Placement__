@@ -59,7 +59,17 @@ def start_run(cursor, source_id):
 
 def _serialized_skills(job):
     skills = job.get("skills")
-    return json.dumps(skills) if isinstance(skills, (list, dict)) else skills
+    return json.dumps(skills, ensure_ascii=False) if isinstance(skills, (list, dict)) else skills
+
+
+def _serialized_json(value, default=None):
+    return json.dumps(value if value is not None else ({} if default is None else default), ensure_ascii=False)
+
+
+def _json_cast():
+    # The active V4Career deployment uses Neon PostgreSQL. Keep MySQL syntax
+    # compatible for installations that still use that engine.
+    return "CAST(%s AS JSON)" if is_mysql() else "CAST(%s AS JSONB)"
 
 
 
@@ -75,7 +85,7 @@ def update_existing_job(cursor, job_id, job):
     salary_currency = job.get("salary_currency") or "INR"
     salary_period = job.get("salary_period") or "year"
 
-    cursor.execute("""
+    cursor.execute(f"""
         UPDATE jobs SET
             external_id = COALESCE(%s, external_id),
             url_hash = COALESCE(%s, url_hash),
@@ -94,6 +104,13 @@ def update_existing_job(cursor, job_id, job):
             job_url = %s,
             posted_at = COALESCE(%s, posted_at),
             status = %s,
+            country = COALESCE(%s, country),
+            work_mode = COALESCE(%s, work_mode),
+            employment_type = COALESCE(%s, employment_type),
+            company_logo = COALESCE(%s, company_logo),
+            posted_via = COALESCE(%s, posted_via),
+            apply_options = COALESCE({_json_cast()}, apply_options),
+            raw_metadata = COALESCE({_json_cast()}, raw_metadata),
             last_seen_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = %s
@@ -115,6 +132,13 @@ def update_existing_job(cursor, job_id, job):
         job["job_url"],
         job.get("posted_at"),
         job.get("status", "unknown"),
+        job.get("country"),
+        job.get("work_mode"),
+        job.get("employment_type"),
+        job.get("company_logo"),
+        job.get("posted_via"),
+        _serialized_json(job.get("apply_options")),
+        _serialized_json(job.get("raw_metadata"), default={}),
         job_id,
     ))
 
@@ -143,13 +167,17 @@ def upsert_job(cursor, source_id, job, naukri_source_ids=None):
         if alias:
             update_existing_job(cursor, alias[0], job)
             return "updated"
-    cursor.execute("""INSERT INTO jobs (source_id, external_id, url_hash, title, company, location, experience,
-        salary_min, salary_max, salary_currency, salary_period, skills, description, job_url, posted_at, status, last_seen_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)""",
+    cursor.execute(f"""INSERT INTO jobs (source_id, external_id, url_hash, title, company, location, experience,
+        salary_min, salary_max, salary_currency, salary_period, skills, description, job_url, posted_at, status,
+        country, work_mode, employment_type, company_logo, posted_via, apply_options, raw_metadata, last_seen_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+        %s, %s, %s, %s, %s, {_json_cast()}, {_json_cast()}, CURRENT_TIMESTAMP)""",
         (source_id, job.get("external_id"), job["url_hash"], job["title"], job.get("company"), job.get("location"),
          job.get("experience"), job.get("salary_min"), job.get("salary_max"), job.get("salary_currency", "INR"),
          job.get("salary_period", "year"), _serialized_skills(job), job.get("description"), job["job_url"],
-         job.get("posted_at"), job.get("status", "unknown")))
+         job.get("posted_at"), job.get("status", "unknown"), job.get("country"), job.get("work_mode"),
+         job.get("employment_type"), job.get("company_logo"), job.get("posted_via"),
+         _serialized_json(job.get("apply_options")), _serialized_json(job.get("raw_metadata"), default={})))
     return "inserted"
 
 

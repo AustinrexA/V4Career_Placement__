@@ -1,0 +1,4 @@
+# V4Career six-source collector settings
+APIFY_ACTOR_GOOGLE_JOBS=themineworks~google-jobs-scraper
+APIFY_ACCESS_APPROVED_GOOGLE_JOBS=false
+GOOGLE_JOBS_MAX_ITEMS=10

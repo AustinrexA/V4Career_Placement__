@@ -246,4 +246,12 @@ def normalize_job(raw: dict) -> dict:
         "job_url": normalized_url,
         "posted_at": parse_datetime(raw.get("posted_at")),
         "status": status,
+        # Optional enrichment fields used by Google Jobs and remote-board feeds.
+        "country": str(raw.get("country") or "").strip()[:120] or None,
+        "work_mode": str(raw.get("work_mode") or "").strip()[:40] or None,
+        "employment_type": str(raw.get("employment_type") or "").strip()[:100] or None,
+        "company_logo": str(raw.get("company_logo") or "").strip()[:2048] or None,
+        "posted_via": str(raw.get("posted_via") or "").strip()[:255] or None,
+        "apply_options": raw.get("apply_options") if isinstance(raw.get("apply_options"), list) else [],
+        "raw_metadata": raw.get("raw_metadata") if isinstance(raw.get("raw_metadata"), dict) else {},
     }

@@ -22,6 +22,13 @@ CREATE TABLE IF NOT EXISTS jobs (
     title VARCHAR(500) NOT NULL,
     company VARCHAR(255),
     location VARCHAR(255),
+    country VARCHAR(120),
+    work_mode VARCHAR(40),
+    employment_type VARCHAR(100),
+    company_logo VARCHAR(2048),
+    posted_via VARCHAR(255),
+    apply_options JSONB NOT NULL DEFAULT '[]'::jsonb,
+    raw_metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
     experience VARCHAR(255),
     salary_min NUMERIC(15,2),
     salary_max NUMERIC(15,2),
@@ -66,6 +73,11 @@ CREATE INDEX IF NOT EXISTS idx_jobs_company
 
 CREATE INDEX IF NOT EXISTS idx_jobs_location
     ON jobs (location);
+
+CREATE INDEX IF NOT EXISTS idx_jobs_country ON jobs (country);
+CREATE INDEX IF NOT EXISTS idx_jobs_work_mode ON jobs (work_mode);
+CREATE INDEX IF NOT EXISTS idx_jobs_employment_type ON jobs (employment_type);
+CREATE INDEX IF NOT EXISTS idx_jobs_posted_via ON jobs (posted_via);
 
 CREATE INDEX IF NOT EXISTS idx_jobs_status
     ON jobs (status);

@@ -1200,10 +1200,12 @@ def dashboard_stats():
         # aggregate the entire jobs table on every dashboard refresh.
         source_metrics = fetch_one("""
             SELECT
-                (SELECT 18) AS total_sources, -- 15 job portals + Amazon, Deloitte, Infosys company feeds
-                (SELECT COUNT(DISTINCT j.source_id) FROM jobs j
-                 INNER JOIN sources s ON s.id = j.source_id
-                 WHERE LOWER(TRIM(s.name)) IN ('naukri','indeed','linkedin','linkedin jobs','glassdoor','foundit','timesjobs','bayt','internshala','wellfound','unstop','hirist','freshersworld','shine','cutshort','instahyre','amazon','deloitte','infosys')) AS enabled_sources
+                COUNT(DISTINCT CASE WHEN j.id IS NOT NULL THEN s.id END) AS total_sources,
+                COUNT(DISTINCT CASE WHEN j.id IS NOT NULL THEN s.id END) AS enabled_sources
+            FROM sources s
+            LEFT JOIN jobs j ON j.source_id = s.id
+            WHERE LOWER(TRIM(COALESCE(s.name, ''))) NOT IN ('csv import', 'all sources')
+              AND COALESCE(LOWER(TRIM(s.source_type)), 'job_website') <> 'company_career'
         """) or {}
         by_source = fetch_all("""
             SELECT s.name AS source_name,
@@ -1351,11 +1353,18 @@ def admin_analytics():
         ]
         locations.sort(key=lambda row: (-row["total"], row["label"].lower()))
 
+        source_count = fetch_one("""
+            SELECT COUNT(DISTINCT s.id) AS total
+            FROM sources s
+            INNER JOIN jobs j ON j.source_id = s.id
+            WHERE LOWER(TRIM(COALESCE(s.name, ''))) NOT IN ('csv import', 'all sources')
+              AND COALESCE(LOWER(TRIM(s.source_type)), 'job_website') <> 'company_career'
+        """) or {}
         return jsonify({
             "total_jobs": int(total.get("total") or 0),
             "fresher_jobs": int((fresher or {}).get("total") or 0),
             "experienced_jobs": int(experienced.get("total") or 0),
-            "portals": portals, "portal_source_count": 18,
+            "portals": portals, "portal_source_count": int(source_count.get("total") or 0),
             "companies": companies, "locations": locations,
             "job_families": job_families,
             "job_family_total": sum(row["total"] for row in job_families)
